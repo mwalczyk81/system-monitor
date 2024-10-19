@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemMonitor", "SystemMonitor\SystemMonitor.csproj", "{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA4B38E9-59C1-4B7B-96D1-8F3996BFC952}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0AF0A4BE-81A2-4908-9B28-891C1033E50D}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,223 @@
+﻿@page "/"
+@using ApexCharts
+@using SystemMonitor.Services
+@using MudBlazor
+
+@inject ISystemPerformanceService PerformanceService
+
+<MudContainer Class="mb-4" Style="text-align: center; margin-top: 20px;">
+    <MudText Typo="Typo.h3" Style="font-weight:bold; color:#2c3e50; margin-bottom: 16px;">
+        System Performance Monitor
+    </MudText>
+
+    <!-- Improved Button Styling with Icons -->
+    <MudButton FullWidth="true" OnClick="@ToggleMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" Style="border-radius: 20px; min-width: 150px;">
+        @if (isMonitoring)
+        {
+            <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Class="mr-2" />
+            <span>Pause Monitoring</span>
+        }
+        else
+        {
+            <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Class="mr-2" />
+            <span>Start Monitoring</span>
+        }
+    </MudButton>
+</MudContainer>
+
+<MudGrid Class="mt-2" Gutter="true" Style="height: 100vh; padding: 0;">
+    <!-- CPU Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <ApexChart @ref="cpuChart" TItem="ChartDataPoint" Title="CPU Usage" Options="CpuChartOptions">
+                    <ApexPointSeries TItem="ChartDataPoint"
+                                     SeriesType="SeriesType.Area"
+                                     Items="cpuData"
+                                     YValue="y => (decimal)y.Value"
+                                     XValue="x => x.Time" />
+                </ApexChart>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Memory Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <ApexChart @ref="memoryChart" TItem="ChartDataPoint" Title="Memory Usage" Options="MemoryChartOptions">
+                    <ApexPointSeries TItem="ChartDataPoint"
+                                     SeriesType="SeriesType.Area"
+                                     Items="memoryData"
+                                     YValue="y => (decimal)y.Value"
+                                     XValue="x => x.Time" />
+                </ApexChart>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- GPU Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <ApexChart @ref="gpuChart" TItem="ChartDataPoint" Title="GPU Usage" Options="GpuChartOptions">
+                    <ApexPointSeries TItem="ChartDataPoint"
+                                     SeriesType="SeriesType.Area"
+                                     Items="gpuData"
+                                     YValue="y => (decimal)y.Value"
+                                     XValue="x => x.Time" />
+                </ApexChart>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+
+@code {
+    private List<ChartDataPoint> cpuData = new List<ChartDataPoint>();
+    private List<ChartDataPoint> memoryData = new List<ChartDataPoint>();
+    private List<ChartDataPoint> gpuData = new List<ChartDataPoint>();
+    private ApexChart<ChartDataPoint>? cpuChart = new();
+    private ApexChart<ChartDataPoint>? memoryChart = new();
+    private ApexChart<ChartDataPoint>? gpuChart = new();
+    private System.Timers.Timer? timer = new();
+    private bool isMonitoring = true;
+    private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
+    private ApexChartOptions<ChartDataPoint> GpuChartOptions { get; set; } = new();
+    private ApexChartOptions<ChartDataPoint> MemoryChartOptions { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        // Set up the timer to update every second
+        timer = new System.Timers.Timer(1000);
+        timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
+        timer.AutoReset = true;
+        timer.Enabled = true;
+        CpuChartOptions = CreateChartOptions();
+        MemoryChartOptions = CreateChartOptions();
+        GpuChartOptions = CreateChartOptions();
+    }
+
+    private void ToggleMonitoring()
+    {
+        isMonitoring = !isMonitoring;
+    }
+
+    private ApexChartOptions<ChartDataPoint> CreateChartOptions()
+    {
+        return new ApexChartOptions<ChartDataPoint>
+            {
+                Chart = new Chart
+                {
+                    Background = "#f4f4f4", // Light gray background
+                    Toolbar = new Toolbar
+                    {
+                        Show = true
+                    }
+                },
+                Stroke = new Stroke
+                {
+                    Curve = Curve.Smooth, // Smoother line transitions
+                    Width = 3
+                },
+                Fill = new Fill
+                {
+                    Type = FillType.Gradient, // Add a gradient fill to the chart area
+                    Gradient = new FillGradient
+                    {
+                        Shade = GradientShade.Light,
+                        Type = GradientType.Vertical,
+                        ShadeIntensity = 0.5,
+                        OpacityFrom = 0.7,
+                        OpacityTo = 0.3,
+                    }
+                },
+                Yaxis = new List<YAxis>
+                {
+                    new YAxis
+                    {
+                        Labels = new YAxisLabels
+                        {
+                            Formatter = "function(val) { return val + '%'; }",
+                            Style = new AxisLabelStyle
+                            {
+                                FontSize = "12px",
+                                Colors = "#333"
+                            }
+                        }
+
+                    }
+                },
+                Xaxis = new XAxis
+                {
+                    Labels = new XAxisLabels
+                    {
+                        Formatter = "function(value) { return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit', second:'2-digit' }); }",
+                        Style = new AxisLabelStyle
+                        {
+                            FontSize = "12px",
+                            Colors = "#333"
+                        }
+                    }
+                },
+                Tooltip = new Tooltip
+                {
+                    Enabled = true,
+                    X = new TooltipX
+                    {
+                        Formatter = "function(value) { return new Date(value).toLocaleTimeString(); }"
+                    }
+                },
+                Grid = new Grid
+                {
+                    BorderColor = "#e0e0e0", // Lighter gridlines
+                    Row = new GridRow
+                    {
+                        Colors = new List<string> { "#f0f0f0", "#ffffff" }, // Alternating background colors
+                        Opacity = 0.5
+                    }
+                }
+            };
+    }
+
+    private async Task UpdatePerformanceData()
+    {
+
+        if (!isMonitoring) return;
+
+        // Get the current CPU and memory usage
+        double cpuUsage = PerformanceService.GetCpuUsage();
+        double memoryUsage = PerformanceService.GetMemoryUsage();
+        double gpuUsage = PerformanceService.GetGpuUsage();
+
+        // Add new data points to the lists
+        cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
+        memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
+        gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
+
+        // Limit the history to the last 100 data points
+        if (cpuData.Count > 100) cpuData.RemoveAt(0);
+        if (memoryData.Count > 100) memoryData.RemoveAt(0);
+        if (gpuData.Count > 100) gpuData.RemoveAt(0);
+
+        // await cpuChart!.AppendDataAsync(cpuData);
+        // await memoryChart!.AppendDataAsync(memoryData);
+
+        // Update the charts with the new data without redrawing
+        await cpuChart!.UpdateSeriesAsync(false);
+        await memoryChart!.UpdateSeriesAsync(false);
+        await gpuChart!.UpdateSeriesAsync(false);
+    }
+
+    public class ChartDataPoint
+    {
+        public DateTime Time { get; set; }
+        public double Value { get; set; }
+    }
+
+    public void Dispose()
+    {
+        // Dispose of the timer when the component is disposed
+        timer?.Dispose();
+    }
+}
