@@ -2,6 +2,7 @@
 @using MudBlazor
 @using MudBlazor.Components
 
+<MudThemeProvider @ref="_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" Theme="CustomTheme" />
 <MudPopoverProvider/>
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -12,3 +13,83 @@
     </MudMainContent>
 </MudLayout>
 
+
+@code {
+    private bool _isDarkMode;
+    private MudThemeProvider? _mudThemeProvider;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _mudThemeProvider is not null)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+            await _mudThemeProvider.WatchSystemPreference(OnSystemPreferenceChanged);
+            StateHasChanged();
+        }
+    }
+
+    private Task OnSystemPreferenceChanged(bool newValue)
+    {
+        _isDarkMode = newValue;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private MudTheme CustomTheme = new MudTheme()
+        {
+            PaletteLight = new PaletteLight()
+            {
+                Primary = Colors.Cyan.Accent3, // A sleek, cool cyan as the primary color
+                Secondary = Colors.Lime.Accent3, // A fresh lime for contrast and vibrancy
+                Background = Colors.Gray.Lighten5, // Very light gray background for a clean and modern feel
+                Surface = Colors.Shades.White, // Crisp white for elevated surfaces like cards
+                AppbarBackground = Colors.Cyan.Darken2, // Dark cyan for the app bar to give it a sleek tone
+                AppbarText = Colors.Shades.White, // White text on the app bar for high contrast and readability
+                DrawerBackground = Colors.Gray.Lighten3, // Soft gray background for the drawer
+                DrawerText = Colors.Gray.Darken3, // Dark gray text for a modern look
+                TextPrimary = Colors.Gray.Darken3, // Dark gray for the main text color, sleek and professional
+                TextSecondary = Colors.Gray.Darken1, // Slightly lighter gray for secondary text
+                ActionDefault = Colors.Cyan.Accent3, // Cyan for action buttons to match the primary theme
+                ActionDisabled = Colors.Gray.Lighten2, // Light gray for disabled actions to keep things subtle
+                ActionDisabledBackground = Colors.Gray.Lighten4, // Light gray for the background of disabled actions
+                Divider = Colors.Gray.Lighten2, // Subtle dividers for clean separation without overpowering the design
+                Success = Colors.Green.Accent2, // Muted green for success messages, keeping the tone sophisticated
+                Warning = Colors.Orange.Accent2, // Muted orange for warnings
+                Error = Colors.Red.Accent2, // A touch of red for errors to stand out while keeping sleekness
+                Info = Colors.Blue.Accent2, // Muted blue for informational messages
+            },
+            LayoutProperties = new LayoutProperties()
+            {
+                DefaultBorderRadius = "4px", // Slightly sharper corners for a more modern feel
+            },
+            PaletteDark = new PaletteDark()
+            {
+                Primary = Colors.Cyan.Accent4, // Bold, rich cyan for the primary color in dark mode
+                Secondary = Colors.Lime.Accent4, // Bright lime for vibrant contrast in dark mode
+                Background = Colors.Gray.Darken4, // Deep, dark gray background for a clean, modern look
+                Surface = Colors.Gray.Darken2, // Slightly lighter gray for card surfaces
+                AppbarBackground = Colors.Cyan.Darken4, // Dark cyan for the app bar
+                AppbarText = Colors.Shades.White, // White text for the app bar for strong readability
+                DrawerBackground = Colors.Gray.Darken3, // Matching dark gray for the drawer background
+                DrawerText = Colors.Shades.White, // White text for contrast in the drawer
+                TextPrimary = Colors.Shades.White, // White for main text color to stand out on the dark background
+                TextSecondary = Colors.Gray.Lighten2, // Light gray for secondary text
+                ActionDefault = Colors.Cyan.Lighten1, // Lighter cyan to make actions visible in dark mode
+                ActionDisabled = Colors.Gray.Darken1, // Muted dark gray for disabled actions
+                ActionDisabledBackground = Colors.Gray.Darken3, // Dark gray for disabled action backgrounds
+                Divider = Colors.Gray.Darken1, // Subtle dividers for a modern and clean look
+                Success = Colors.Green.Accent3, // Muted green for success messages in dark mode
+                Warning = Colors.Orange.Accent3, // Muted orange for warnings in dark mode
+                Error = Colors.Red.Accent2, // A touch of red for errors
+                Info = Colors.Blue.Accent3 // Muted blue for informational messages in dark mode
+            },
+            Typography = new Typography()
+            {
+                Default = new Default() { FontFamily = new[] { "Roboto", "Arial", "sans-serif" }, FontSize = "0.95rem" },
+                H1 = new H1() { FontSize = "2.5rem", FontWeight = 700, LetterSpacing = "-0.5px" },
+                H2 = new H2() { FontSize = "2.0rem", FontWeight = 700 },
+                Button = new Button() { FontSize = "1rem", FontWeight = 600 },
+                Subtitle1 = new Subtitle1() { FontWeight = 500 }
+            }
+        };
+}

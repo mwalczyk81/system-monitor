@@ -47,6 +47,10 @@ namespace SystemMonitor.Services
             return batteryLevel;  // Battery level as percentage
         }
 
+        public double GetGpuUsage()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

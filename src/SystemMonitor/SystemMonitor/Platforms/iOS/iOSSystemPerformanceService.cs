@@ -57,6 +57,11 @@ namespace SystemMonitor.Services
         [DllImport(ObjCRuntime.Constants.SystemLibrary)]
         private static extern IntPtr mach_task_self();
 
+        public double GetGpuUsage()
+        {
+            throw new NotImplementedException();
+        }
+
         private const int MACH_TASK_BASIC_INFO = 20;
         private struct mach_task_basic_info_data_t
         {

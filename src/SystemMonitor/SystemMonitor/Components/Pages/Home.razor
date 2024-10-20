@@ -5,24 +5,37 @@
 
 @inject ISystemPerformanceService PerformanceService
 
-<MudContainer Class="mb-4" Style="text-align: center; margin-top: 20px;">
-    <MudText Typo="Typo.h3" Style="font-weight:bold; color:#2c3e50; margin-bottom: 16px;">
+<MudContainer Class="mb-4" Style="text-align: center; margin-top: 20px; overflow: visible;">
+    <MudText Color="MudBlazor.Color.Primary" Typo="Typo.h3" Style="font-weight:bold; margin-bottom: 16px;">
         System Performance Monitor
     </MudText>
 
-    <!-- Improved Button Styling with Icons -->
-    <MudButton FullWidth="true" OnClick="@ToggleMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" Style="border-radius: 20px; min-width: 150px;">
-        @if (isMonitoring)
-        {
-            <MudIcon Icon="@Icons.Material.Filled.PauseCircle" Class="mr-2" />
-            <span>Pause Monitoring</span>
-        }
-        else
-        {
-            <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Class="mr-2" />
-            <span>Start Monitoring</span>
-        }
+    <MudSelect T="int" Label="Update Frequency (seconds)" Value="@updateInterval" ValueChanged="OnUpdateIntervalChanged">
+        <MudSelectItem Value="1">1 second</MudSelectItem>
+        <MudSelectItem Value="5">5 seconds</MudSelectItem>
+        <MudSelectItem Value="10">10 seconds</MudSelectItem>
+    </MudSelect>
+
+    <MudButton StartIcon="@Icons.Material.Filled.PlayCircle" OnClick="@StartMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Success" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
+        Start
     </MudButton>
+    <MudButton StartIcon="@Icons.Material.Filled.PauseCircle" OnClick="@PauseMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Warning" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
+        Pause
+    </MudButton>
+    <MudButton StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetCharts" Variant="Variant.Filled" Color="MudBlazor.Color.Error" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
+        Reset
+    </MudButton>
+
+    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
+        Average CPU Usage: @GetAverage(cpuData) %
+    </MudText>
+    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
+        Average Memory Usage: @GetAverage(memoryData) %
+    </MudText>
+    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
+        Average GPU Usage: @GetAverage(gpuData) %
+    </MudText>
+
 </MudContainer>
 
 <MudGrid Class="mt-2" Gutter="true" Style="height: 100vh; padding: 0;">
@@ -85,11 +98,12 @@
     private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
     private ApexChartOptions<ChartDataPoint> GpuChartOptions { get; set; } = new();
     private ApexChartOptions<ChartDataPoint> MemoryChartOptions { get; set; } = new();
+    private int updateInterval = 1;
 
     protected override void OnInitialized()
     {
         // Set up the timer to update every second
-        timer = new System.Timers.Timer(1000);
+        timer = new System.Timers.Timer(TimeSpan.FromSeconds(updateInterval));
         timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
         timer.AutoReset = true;
         timer.Enabled = true;
@@ -98,9 +112,21 @@
         GpuChartOptions = CreateChartOptions();
     }
 
-    private void ToggleMonitoring()
+    private void PauseMonitoring() => isMonitoring = false;
+    private void StartMonitoring() => isMonitoring = true;
+    private double GetAverage(List<ChartDataPoint> data) => data.Count > 0 ? data.Average(x => x.Value) : 0;
+
+    private void OnUpdateIntervalChanged(int newInterval)
     {
-        isMonitoring = !isMonitoring;
+        updateInterval = newInterval;
+
+        // Restart the timer with the new interval
+        if (timer != null)
+        {
+            timer.Stop();
+            timer.Interval = updateInterval * 1000;
+            timer.Start();
+        }
     }
 
     private ApexChartOptions<ChartDataPoint> CreateChartOptions()
@@ -113,6 +139,22 @@
                     Toolbar = new Toolbar
                     {
                         Show = true
+                    },
+                    Animations = new Animations
+                    {
+                        Enabled = true, // Enable animations
+                        Easing = Easing.Easeinout, // Smooth easing function for animations
+                        Speed = 800, // Speed in milliseconds
+                        AnimateGradually = new AnimateGradually
+                        {
+                            Enabled = true,
+                            Delay = 150 // Delay between the animation of data points
+                        },
+                        DynamicAnimation = new DynamicAnimation
+                        {
+                            Enabled = true,
+                            Speed = 350 // Animation speed for data points when the chart updates
+                        }
                     }
                 },
                 Stroke = new Stroke
@@ -153,6 +195,7 @@
                     Labels = new XAxisLabels
                     {
                         Formatter = "function(value) { return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit', second:'2-digit' }); }",
+                        Show = false,
                         Style = new AxisLabelStyle
                         {
                             FontSize = "12px",
@@ -200,13 +243,18 @@
         if (memoryData.Count > 100) memoryData.RemoveAt(0);
         if (gpuData.Count > 100) gpuData.RemoveAt(0);
 
-        // await cpuChart!.AppendDataAsync(cpuData);
-        // await memoryChart!.AppendDataAsync(memoryData);
-
         // Update the charts with the new data without redrawing
         await cpuChart!.UpdateSeriesAsync(false);
         await memoryChart!.UpdateSeriesAsync(false);
         await gpuChart!.UpdateSeriesAsync(false);
+    }
+
+    private void ResetCharts()
+    {
+        cpuData.Clear();
+        memoryData.Clear();
+        gpuData.Clear();
+        StateHasChanged();
     }
 
     public class ChartDataPoint
@@ -217,7 +265,10 @@
 
     public void Dispose()
     {
-        // Dispose of the timer when the component is disposed
-        timer?.Dispose();
+        if (timer != null)
+        {
+            timer.Stop();
+            timer.Dispose();
+        }
     }
 }
