@@ -142,29 +142,29 @@
                     },
                     Animations = new Animations
                     {
-                        Enabled = true, // Enable animations
-                        Easing = Easing.Easeinout, // Smooth easing function for animations
-                        Speed = 800, // Speed in milliseconds
+                        Enabled = true, 
+                        Easing = Easing.Easeinout, 
+                        Speed = 500, 
                         AnimateGradually = new AnimateGradually
                         {
                             Enabled = true,
-                            Delay = 150 // Delay between the animation of data points
+                            Delay = 150 
                         },
                         DynamicAnimation = new DynamicAnimation
                         {
                             Enabled = true,
-                            Speed = 350 // Animation speed for data points when the chart updates
+                            Speed = 350 
                         }
                     }
                 },
                 Stroke = new Stroke
                 {
-                    Curve = Curve.Smooth, // Smoother line transitions
+                    Curve = Curve.Smooth,
                     Width = 3
                 },
                 Fill = new Fill
                 {
-                    Type = FillType.Gradient, // Add a gradient fill to the chart area
+                    Type = FillType.Gradient, 
                     Gradient = new FillGradient
                     {
                         Shade = GradientShade.Light,
@@ -213,10 +213,10 @@
                 },
                 Grid = new Grid
                 {
-                    BorderColor = "#e0e0e0", // Lighter gridlines
+                    BorderColor = "#e0e0e0", 
                     Row = new GridRow
                     {
-                        Colors = new List<string> { "#f0f0f0", "#ffffff" }, // Alternating background colors
+                        Colors = new List<string> { "#f0f0f0", "#ffffff" }, 
                         Opacity = 0.5
                     }
                 }
@@ -228,12 +228,10 @@
 
         if (!isMonitoring) return;
 
-        // Get the current CPU and memory usage
         double cpuUsage = PerformanceService.GetCpuUsage();
         double memoryUsage = PerformanceService.GetMemoryUsage();
         double gpuUsage = PerformanceService.GetGpuUsage();
 
-        // Add new data points to the lists
         cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
         memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
         gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
@@ -244,9 +242,9 @@
         if (gpuData.Count > 100) gpuData.RemoveAt(0);
 
         // Update the charts with the new data without redrawing
-        await cpuChart!.UpdateSeriesAsync(false);
-        await memoryChart!.UpdateSeriesAsync(false);
-        await gpuChart!.UpdateSeriesAsync(false);
+        await cpuChart!.UpdateSeriesAsync();
+        await memoryChart!.UpdateSeriesAsync();
+        await gpuChart!.UpdateSeriesAsync();
     }
 
     private void ResetCharts()
