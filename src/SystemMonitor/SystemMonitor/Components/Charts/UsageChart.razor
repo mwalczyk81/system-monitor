@@ -1,0 +1,29 @@
+﻿@using ApexCharts
+@using SystemMonitor.Models
+
+<ApexChart @ref="@ChartRef" TItem="ChartDataPoint" Title="@Title" Options="Options">
+    <ApexPointSeries TItem="ChartDataPoint"
+                     SeriesType="SeriesType.Area"
+                     Items="Data"
+                     YValue="y => (decimal)y.Value.GetValueOrDefault()"
+                     XValue="x => x.Time" />
+</ApexChart>
+
+@code {
+    // Parameters to customize the chart
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public List<ChartDataPoint>? Data { get; set; }
+    [Parameter] public ApexChartOptions<ChartDataPoint>? Options { get; set; }
+
+    // Expose the ChartRef as a parameter so the parent component can reference it
+    public ApexChart<ChartDataPoint>? ChartRef { get; set; }
+
+    // Method to update the chart from outside
+    public async Task UpdateChartAsync()
+    {
+        if (ChartRef != null)
+        {
+            await ChartRef.UpdateSeriesAsync();
+        }
+    }
+}

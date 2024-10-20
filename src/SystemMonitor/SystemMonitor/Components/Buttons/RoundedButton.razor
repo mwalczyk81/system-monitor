@@ -1,0 +1,11 @@
+﻿<MudButton StartIcon="@Icon" OnClick="@OnClick" Variant="Variant.Filled" Color="@Color" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
+    @Text
+</MudButton>
+
+@code {
+    // Define parameters to allow customization
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public string? Text { get; set; } 
+    [Parameter] public Color Color { get; set; } 
+}

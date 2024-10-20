@@ -1,0 +1,13 @@
+﻿@using SystemMonitor.Models
+
+<MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
+    @Label: @GetAverage(Data) @Unit
+</MudText>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public List<ChartDataPoint>? Data { get; set; }
+    [Parameter] public string? Unit { get; set; }
+
+    private double GetAverage(List<ChartDataPoint>? data) => data is not null && data.Count > 0 ? data.Average(x => x.Value.GetValueOrDefault()) : 0;
+}

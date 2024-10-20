@@ -1,7 +1,10 @@
 ﻿@page "/"
 @using ApexCharts
 @using SystemMonitor.Services
-@using MudBlazor
+@using SystemMonitor.Components.Buttons
+@using SystemMonitor.Components.Typo
+@using SystemMonitor.Models
+@using SystemMonitor.Components.Charts
 
 @inject ISystemPerformanceService PerformanceService
 
@@ -16,25 +19,13 @@
         <MudSelectItem Value="10">10 seconds</MudSelectItem>
     </MudSelect>
 
-    <MudButton StartIcon="@Icons.Material.Filled.PlayCircle" OnClick="@StartMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Success" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
-        Start
-    </MudButton>
-    <MudButton StartIcon="@Icons.Material.Filled.PauseCircle" OnClick="@PauseMonitoring" Variant="Variant.Filled" Color="MudBlazor.Color.Warning" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
-        Pause
-    </MudButton>
-    <MudButton StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetCharts" Variant="Variant.Filled" Color="MudBlazor.Color.Error" Style="border-radius: 20px; min-width: 150px; margin: 10px;">
-        Reset
-    </MudButton>
+    <RoundedButton Color="MudBlazor.Color.Success" Icon="@Icons.Material.Filled.PlayCircle" OnClick="@StartMonitoring" Text="Start">  </RoundedButton>
+    <RoundedButton Color="MudBlazor.Color.Warning" Icon="@Icons.Material.Filled.PauseCircle" OnClick="@PauseMonitoring" Text="Pause">  </RoundedButton>
+    <RoundedButton Color="MudBlazor.Color.Error" Icon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetCharts" Text="Reset">  </RoundedButton>
 
-    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
-        Average CPU Usage: @GetAverage(cpuData) %
-    </MudText>
-    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
-        Average Memory Usage: @GetAverage(memoryData) %
-    </MudText>
-    <MudText Typo="Typo.subtitle1" Style="margin-top: 10px;">
-        Average GPU Usage: @GetAverage(gpuData) %
-    </MudText>
+    <AverageUsageDisplay Label="Average CPU Usage" Data="cpuData" Unit="%" />
+    <AverageUsageDisplay Label="Average Memory Usage" Data="memoryData" Unit="%" />
+    <AverageUsageDisplay Label="Average GPU Usage" Data="gpuData" Unit="%" />
 
 </MudContainer>
 
@@ -43,13 +34,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <ApexChart @ref="cpuChart" TItem="ChartDataPoint" Title="CPU Usage" Options="CpuChartOptions">
-                    <ApexPointSeries TItem="ChartDataPoint"
-                                     SeriesType="SeriesType.Area"
-                                     Items="cpuData"
-                                     YValue="y => (decimal)y.Value"
-                                     XValue="x => x.Time" />
-                </ApexChart>
+                <UsageChart @ref="cpuUsageChart" Title="CPU Usage" Data="cpuData" Options="CpuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -58,13 +43,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <ApexChart @ref="memoryChart" TItem="ChartDataPoint" Title="Memory Usage" Options="MemoryChartOptions">
-                    <ApexPointSeries TItem="ChartDataPoint"
-                                     SeriesType="SeriesType.Area"
-                                     Items="memoryData"
-                                     YValue="y => (decimal)y.Value"
-                                     XValue="x => x.Time" />
-                </ApexChart>
+                <UsageChart @ref="memoryUsageChart" Title="Memory Usage" Data="memoryData" Options="MemoryChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -73,13 +52,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <ApexChart @ref="gpuChart" TItem="ChartDataPoint" Title="GPU Usage" Options="GpuChartOptions">
-                    <ApexPointSeries TItem="ChartDataPoint"
-                                     SeriesType="SeriesType.Area"
-                                     Items="gpuData"
-                                     YValue="y => (decimal)y.Value"
-                                     XValue="x => x.Time" />
-                </ApexChart>
+                <UsageChart @ref="gpuUsageChart" Title="GPU Usage" Data="gpuData" Options="GpuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -90,9 +63,9 @@
     private List<ChartDataPoint> cpuData = new List<ChartDataPoint>();
     private List<ChartDataPoint> memoryData = new List<ChartDataPoint>();
     private List<ChartDataPoint> gpuData = new List<ChartDataPoint>();
-    private ApexChart<ChartDataPoint>? cpuChart = new();
-    private ApexChart<ChartDataPoint>? memoryChart = new();
-    private ApexChart<ChartDataPoint>? gpuChart = new();
+    private UsageChart cpuUsageChart = new();
+    private UsageChart memoryUsageChart = new();
+    private UsageChart gpuUsageChart = new();
     private System.Timers.Timer? timer = new();
     private bool isMonitoring = true;
     private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
@@ -114,7 +87,6 @@
 
     private void PauseMonitoring() => isMonitoring = false;
     private void StartMonitoring() => isMonitoring = true;
-    private double GetAverage(List<ChartDataPoint> data) => data.Count > 0 ? data.Average(x => x.Value) : 0;
 
     private void OnUpdateIntervalChanged(int newInterval)
     {
@@ -242,9 +214,9 @@
         if (gpuData.Count > 100) gpuData.RemoveAt(0);
 
         // Update the charts with the new data without redrawing
-        await cpuChart!.UpdateSeriesAsync();
-        await memoryChart!.UpdateSeriesAsync();
-        await gpuChart!.UpdateSeriesAsync();
+        await cpuUsageChart.UpdateChartAsync();
+        await memoryUsageChart.UpdateChartAsync();
+        await gpuUsageChart.UpdateChartAsync();
     }
 
     private void ResetCharts()
@@ -253,12 +225,6 @@
         memoryData.Clear();
         gpuData.Clear();
         StateHasChanged();
-    }
-
-    public class ChartDataPoint
-    {
-        public DateTime Time { get; set; }
-        public double Value { get; set; }
     }
 
     public void Dispose()
