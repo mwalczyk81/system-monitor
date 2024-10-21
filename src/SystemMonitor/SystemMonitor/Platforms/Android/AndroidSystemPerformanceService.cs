@@ -51,6 +51,21 @@ namespace SystemMonitor.Services
         {
             throw new NotImplementedException();
         }
+
+        public double GetPsuUsage()
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetStorageUsage()
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetNetworkUsage()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

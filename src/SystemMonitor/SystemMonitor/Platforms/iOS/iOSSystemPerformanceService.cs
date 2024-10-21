@@ -62,6 +62,21 @@ namespace SystemMonitor.Services
             throw new NotImplementedException();
         }
 
+        public double GetPsuUsage()
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetStorageUsage()
+        {
+            throw new NotImplementedException();
+        }
+
+        public double GetNetworkUsage()
+        {
+            throw new NotImplementedException();
+        }
+
         private const int MACH_TASK_BASIC_INFO = 20;
         private struct mach_task_basic_info_data_t
         {

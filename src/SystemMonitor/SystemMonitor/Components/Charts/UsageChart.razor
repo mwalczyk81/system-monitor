@@ -10,15 +10,12 @@
 </ApexChart>
 
 @code {
-    // Parameters to customize the chart
     [Parameter] public string? Title { get; set; }
     [Parameter] public List<ChartDataPoint>? Data { get; set; }
     [Parameter] public ApexChartOptions<ChartDataPoint>? Options { get; set; }
 
-    // Expose the ChartRef as a parameter so the parent component can reference it
     public ApexChart<ChartDataPoint>? ChartRef { get; set; }
 
-    // Method to update the chart from outside
     public async Task UpdateChartAsync()
     {
         if (ChartRef != null)

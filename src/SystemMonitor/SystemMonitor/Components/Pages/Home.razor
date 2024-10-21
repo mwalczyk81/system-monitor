@@ -26,7 +26,6 @@
     <AverageUsageDisplay Label="Average CPU Usage" Data="cpuData" Unit="%" />
     <AverageUsageDisplay Label="Average Memory Usage" Data="memoryData" Unit="%" />
     <AverageUsageDisplay Label="Average GPU Usage" Data="gpuData" Unit="%" />
-
 </MudContainer>
 
 <MudGrid Class="mt-2" Gutter="true" Style="height: 100vh; padding: 0;">
@@ -53,6 +52,51 @@
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
                 <UsageChart @ref="gpuUsageChart" Title="GPU Usage" Data="gpuData" Options="GpuChartOptions" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Download Speed Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <UsageChart @ref="downloadChart" Title="Download Speed" Data="downloadData" Options="DownloadChartOptions" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Upload Speed Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <UsageChart @ref="uploadChart" Title="Upload Speed" Data="uploadData" Options="UploadChartOptions" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Battery Level Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <UsageChart @ref="batteryUsageChart" Title="Battery Level" Data="batteryData" Options="BatteryChartOptions" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Storage Usage Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <UsageChart @ref="storageUsageChart" Title="Storage Usage" Data="storageData" Options="StorageChartOptions" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- PSU Usage Chart -->
+    <MudItem xs="12" md="4">
+        <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
+            <MudCardContent>
+                <UsageChart @ref="psuUsageChart" Title="PSU Usage" Data="psuData" Options="PsuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>

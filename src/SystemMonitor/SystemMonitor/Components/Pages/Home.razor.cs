@@ -6,55 +6,48 @@ using System.Text;
 using System.Threading.Tasks;
 using SystemMonitor.Components.Charts;
 using SystemMonitor.Models;
+using static SystemMonitor.Constants;
 
 namespace SystemMonitor.Components.Pages
 {
     public partial class Home
     {
-        private List<ChartDataPoint> cpuData = new List<ChartDataPoint>();
-        private List<ChartDataPoint> memoryData = new List<ChartDataPoint>();
-        private List<ChartDataPoint> gpuData = new List<ChartDataPoint>();
+        private readonly List<ChartDataPoint> cpuData = [];
+        private readonly List<ChartDataPoint> memoryData = [];
+        private readonly List<ChartDataPoint> gpuData = [];
+        private readonly List<ChartDataPoint> downloadData = [];
+        private readonly List<ChartDataPoint> uploadData = [];
+        private readonly List<ChartDataPoint> batteryData = [];
+        private readonly List<ChartDataPoint> storageData = [];
+        private readonly List<ChartDataPoint> psuData = [];
+        private List<List<ChartDataPoint>> allDataLists = [];
+
         private UsageChart cpuUsageChart = new();
         private UsageChart memoryUsageChart = new();
         private UsageChart gpuUsageChart = new();
+        private UsageChart downloadChart = new();
+        private UsageChart uploadChart = new();
+        private UsageChart batteryUsageChart = new();
+        private UsageChart storageUsageChart = new();
+        private UsageChart psuUsageChart = new();
+        private List<UsageChart> allCharts = [];
+
         private System.Timers.Timer? timer = new();
         private bool isMonitoring = true;
+        private int updateInterval = 1;
+
         private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
         private ApexChartOptions<ChartDataPoint> GpuChartOptions { get; set; } = new();
         private ApexChartOptions<ChartDataPoint> MemoryChartOptions { get; set; } = new();
-        private int updateInterval = 1;
+        private ApexChartOptions<ChartDataPoint> DownloadChartOptions { get; set; } = new();
+        private ApexChartOptions<ChartDataPoint> UploadChartOptions { get; set; } = new();
+        private ApexChartOptions<ChartDataPoint> BatteryChartOptions { get; set; } = new();
+        private ApexChartOptions<ChartDataPoint> StorageChartOptions { get; set; } = new();
+        private ApexChartOptions<ChartDataPoint> PsuChartOptions { get; set; } = new();
 
-        protected override void OnInitialized()
+        private static ApexChartOptions<ChartDataPoint> GetCreateChartOptions(string title, string yAxisFormat, string color)
         {
-            // Set up the timer to update every second
-            timer = new System.Timers.Timer(TimeSpan.FromSeconds(updateInterval));
-            timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
-            timer.AutoReset = true;
-            timer.Enabled = true;
-            CpuChartOptions = CreateChartOptions();
-            MemoryChartOptions = CreateChartOptions();
-            GpuChartOptions = CreateChartOptions();
-        }
-
-        private void PauseMonitoring() => isMonitoring = false;
-        private void StartMonitoring() => isMonitoring = true;
-
-        private void OnUpdateIntervalChanged(int newInterval)
-        {
-            updateInterval = newInterval;
-
-            // Restart the timer with the new interval
-            if (timer != null)
-            {
-                timer.Stop();
-                timer.Interval = updateInterval * 1000;
-                timer.Start();
-            }
-        }
-
-        private ApexChartOptions<ChartDataPoint> CreateChartOptions()
-        {
-            return new ApexChartOptions<ChartDataPoint>
+            return new()
             {
                 Chart = new Chart
                 {
@@ -62,6 +55,10 @@ namespace SystemMonitor.Components.Pages
                     Toolbar = new ApexCharts.Toolbar
                     {
                         Show = true
+                    },
+                    Zoom = new Zoom
+                    {
+                        Enabled = false
                     },
                     Animations = new Animations
                     {
@@ -80,11 +77,22 @@ namespace SystemMonitor.Components.Pages
                         }
                     }
                 },
+                Title = new Title()
+                {
+                    Text = title,
+                    Align = Align.Center,  
+                    Style = new TitleStyle
+                    {
+                        FontSize = "20px",  
+                        FontWeight = "bold" 
+                    }
+                },
                 Stroke = new Stroke
                 {
                     Curve = Curve.Smooth,
                     Width = 3
                 },
+                Colors = new List<string> { color },
                 Fill = new Fill
                 {
                     Type = FillType.Gradient,
@@ -97,53 +105,78 @@ namespace SystemMonitor.Components.Pages
                         OpacityTo = 0.3,
                     }
                 },
-                Yaxis = new List<YAxis>
-                {
+                Yaxis =
+                [
                     new YAxis
-                    {
-                        Labels = new YAxisLabels
                         {
-                            Formatter = "function(val) { return val + '%'; }",
-                            Style = new AxisLabelStyle
+                            Labels = new YAxisLabels
                             {
-                                FontSize = "12px",
-                                Colors = "#333"
+                                Formatter = yAxisFormat,
+                                Style = new AxisLabelStyle
+                                {
+                                    FontSize = "14px",
+                                    Colors = "#333"
+                                }
                             }
-                        }
 
-                    }
-                },
+                        }
+                 ],
                 Xaxis = new XAxis
                 {
                     Labels = new XAxisLabels
                     {
-                        Formatter = "function(value) { return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit', second:'2-digit' }); }",
                         Show = false,
-                        Style = new AxisLabelStyle
-                        {
-                            FontSize = "12px",
-                            Colors = "#333"
-                        }
                     }
                 },
                 Tooltip = new Tooltip
                 {
-                    Enabled = true,
-                    X = new TooltipX
-                    {
-                        Formatter = "function(value) { return new Date(value).toLocaleTimeString(); }"
-                    }
+                    Enabled = false
                 },
                 Grid = new ApexCharts.Grid
                 {
                     BorderColor = "#e0e0e0",
                     Row = new GridRow
                     {
-                        Colors = new List<string> { "#f0f0f0", "#ffffff" },
+                        Colors = ["#f0f0f0", "#ffffff"],
                         Opacity = 0.5
                     }
                 }
             };
+        }
+
+        protected override void OnInitialized()
+        {
+            timer = new System.Timers.Timer(TimeSpan.FromSeconds(updateInterval));
+            timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
+            timer.AutoReset = true;
+            timer.Enabled = true;
+
+            CpuChartOptions = GetCreateChartOptions("CPU Usage", ChartFormats.YAxis.Percent, "#ff0000"); 
+            MemoryChartOptions = GetCreateChartOptions("Memory Usage", ChartFormats.YAxis.Percent, "#00ff00"); 
+            GpuChartOptions = GetCreateChartOptions("GPU Usage", ChartFormats.YAxis.Percent, "#0000ff");
+            DownloadChartOptions = GetCreateChartOptions("Download Speed", ChartFormats.YAxis.BytesPerSecond, "#ffcc00");
+            UploadChartOptions = GetCreateChartOptions("Upload Speed", ChartFormats.YAxis.BytesPerSecond, "#ffcc00");
+            BatteryChartOptions = GetCreateChartOptions("Battery Level", ChartFormats.YAxis.Percent, "#ff6600");  
+            StorageChartOptions = GetCreateChartOptions("Storage Usage", ChartFormats.YAxis.Percent, "#9933ff");  
+            PsuChartOptions = GetCreateChartOptions("PSU Usage", ChartFormats.YAxis.Percent, "#33ccff");  
+
+            allDataLists = [cpuData, memoryData, gpuData, downloadData, uploadData, batteryData, storageData, psuData];
+        }
+
+        private void PauseMonitoring() => isMonitoring = false;
+        private void StartMonitoring() => isMonitoring = true;
+
+        private void OnUpdateIntervalChanged(int newInterval)
+        {
+            updateInterval = newInterval;
+
+            // Restart the timer with the new interval
+            if (timer != null)
+            {
+                timer.Stop();
+                timer.Interval = updateInterval * 1000;
+                timer.Start();
+            }
         }
 
         private async Task UpdatePerformanceData()
@@ -154,20 +187,40 @@ namespace SystemMonitor.Components.Pages
             double cpuUsage = PerformanceService.GetCpuUsage();
             double memoryUsage = PerformanceService.GetMemoryUsage();
             double gpuUsage = PerformanceService.GetGpuUsage();
+            double batteryLevel = PerformanceService.GetBatteryLevel();
+            double storageUsage = PerformanceService.GetStorageUsage();
+            double psuUsage = PerformanceService.GetPsuUsage();
+            double downloadSpeed = PerformanceService.GetDownloadSpeed();   
+            double uploadSpeed = PerformanceService.GetUploadSpeed();
 
             cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
             memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
             gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
+            downloadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
+            uploadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
+            batteryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
+            storageData.Add(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
+            psuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
+
 
             // Limit the history to the last 100 data points
-            if (cpuData.Count > 100) cpuData.RemoveAt(0);
-            if (memoryData.Count > 100) memoryData.RemoveAt(0);
-            if (gpuData.Count > 100) gpuData.RemoveAt(0);
+            foreach (var dataList in allDataLists.Where(x => x.Count > 100))
+            {
+                dataList.RemoveAt(0);
+            }
 
-            // Update the charts with the new data without redrawing
-            await cpuUsageChart.UpdateChartAsync();
-            await memoryUsageChart.UpdateChartAsync();
-            await gpuUsageChart.UpdateChartAsync();
+            allCharts = [cpuUsageChart, memoryUsageChart, gpuUsageChart, downloadChart, uploadChart, batteryUsageChart, storageUsageChart, psuUsageChart];
+
+            var updateTasks = new List<Task>();
+
+            foreach (var chart in allCharts)
+            {
+                updateTasks.Add(chart.UpdateChartAsync());
+            }
+
+
+            await Task.WhenAll(updateTasks);
+
         }
 
         private void ResetCharts()
