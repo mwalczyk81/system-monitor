@@ -2,6 +2,8 @@
 
 A cross-platform system performance monitoring app built using **.NET MAUI** and **Blazor**. The app tracks and displays real-time system performance metrics, such as CPU and memory usage, with interactive charts to visualize the data directly on the home page.
 
+![alt text](/images//home.png)
+
 ## Features
 
 - **Real-time System Performance Tracking**: Monitors system metrics like CPU and memory usage in real-time.
