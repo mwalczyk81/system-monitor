@@ -221,6 +221,7 @@ namespace SystemMonitor.Components.Pages
 
             await Task.WhenAll(updateTasks);
 
+            await InvokeAsync(StateHasChanged);
         }
 
         private void ResetCharts()
