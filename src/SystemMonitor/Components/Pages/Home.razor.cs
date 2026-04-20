@@ -12,15 +12,15 @@ namespace SystemMonitor.Components.Pages
 {
     public partial class Home
     {
-        private readonly List<ChartDataPoint> cpuData = [];
-        private readonly List<ChartDataPoint> memoryData = [];
-        private readonly List<ChartDataPoint> gpuData = [];
-        private readonly List<ChartDataPoint> downloadData = [];
-        private readonly List<ChartDataPoint> uploadData = [];
-        private readonly List<ChartDataPoint> batteryData = [];
-        private readonly List<ChartDataPoint> storageData = [];
-        private readonly List<ChartDataPoint> psuData = [];
-        private List<List<ChartDataPoint>> allDataLists = [];
+        private readonly Queue<ChartDataPoint> cpuData = new();
+        private readonly Queue<ChartDataPoint> memoryData = new();
+        private readonly Queue<ChartDataPoint> gpuData = new();
+        private readonly Queue<ChartDataPoint> downloadData = new();
+        private readonly Queue<ChartDataPoint> uploadData = new();
+        private readonly Queue<ChartDataPoint> batteryData = new();
+        private readonly Queue<ChartDataPoint> storageData = new();
+        private readonly Queue<ChartDataPoint> psuData = new();
+        private List<Queue<ChartDataPoint>> allDataQueues = [];
 
         private UsageChart cpuUsageChart = new();
         private UsageChart memoryUsageChart = new();
@@ -162,7 +162,15 @@ namespace SystemMonitor.Components.Pages
             StorageChartOptions = GetCreateChartOptions("Storage Usage", ChartFormats.YAxis.Percent, "#9933ff");  
             PsuChartOptions = GetCreateChartOptions("PSU Usage", ChartFormats.YAxis.Percent, "#33ccff");  
 
-            allDataLists = [cpuData, memoryData, gpuData, downloadData, uploadData, batteryData, storageData, psuData];
+            allDataQueues = [cpuData, memoryData, gpuData, downloadData, uploadData, batteryData, storageData, psuData];
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender)
+            {
+                allCharts = [cpuUsageChart, memoryUsageChart, gpuUsageChart, downloadChart, uploadChart, batteryUsageChart, storageUsageChart, psuUsageChart];
+            }
         }
 
         private void PauseMonitoring() => timer?.Stop();
@@ -196,23 +204,21 @@ namespace SystemMonitor.Components.Pages
 
             lock (_dataLock)
             {
-                cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
-                memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
-                gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
-                downloadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
-                uploadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
-                batteryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
-                storageData.Add(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
-                psuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
+                cpuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
+                memoryData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
+                gpuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
+                downloadData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
+                uploadData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
+                batteryData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
+                storageData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
+                psuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
 
                 // Limit the history to the last 100 data points
-                foreach (var dataList in allDataLists.Where(x => x.Count > 100))
+                foreach (var queue in allDataQueues.Where(x => x.Count > 100))
                 {
-                    dataList.RemoveAt(0);
+                    queue.Dequeue();
                 }
             }
-
-            allCharts = [cpuUsageChart, memoryUsageChart, gpuUsageChart, downloadChart, uploadChart, batteryUsageChart, storageUsageChart, psuUsageChart];
 
             var updateTasks = new List<Task>();
 

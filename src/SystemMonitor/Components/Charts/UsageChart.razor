@@ -11,7 +11,7 @@
 
 @code {
     [Parameter] public string? Title { get; set; }
-    [Parameter] public List<ChartDataPoint>? Data { get; set; }
+    [Parameter] public IEnumerable<ChartDataPoint>? Data { get; set; }
     [Parameter] public ApexChartOptions<ChartDataPoint>? Options { get; set; }
 
     public ApexChart<ChartDataPoint>? ChartRef { get; set; }
