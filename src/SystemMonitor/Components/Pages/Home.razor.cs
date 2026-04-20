@@ -1,26 +1,15 @@
-﻿using ApexCharts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ApexCharts;
+using Microsoft.AspNetCore.Components;
 using SystemMonitor.Components.Charts;
 using SystemMonitor.Models;
+using SystemMonitor.Services;
 using static SystemMonitor.Constants;
 
 namespace SystemMonitor.Components.Pages
 {
-    public partial class Home
+    public partial class Home : IDisposable
     {
-        private readonly Queue<ChartDataPoint> cpuData = new();
-        private readonly Queue<ChartDataPoint> memoryData = new();
-        private readonly Queue<ChartDataPoint> gpuData = new();
-        private readonly Queue<ChartDataPoint> downloadData = new();
-        private readonly Queue<ChartDataPoint> uploadData = new();
-        private readonly Queue<ChartDataPoint> batteryData = new();
-        private readonly Queue<ChartDataPoint> storageData = new();
-        private readonly Queue<ChartDataPoint> psuData = new();
-        private List<Queue<ChartDataPoint>> allDataQueues = [];
+        [Inject] private IMetricsCollectionService MetricsService { get; set; } = default!;
 
         private UsageChart cpuUsageChart = new();
         private UsageChart memoryUsageChart = new();
@@ -32,10 +21,7 @@ namespace SystemMonitor.Components.Pages
         private UsageChart psuUsageChart = new();
         private List<UsageChart> allCharts = [];
 
-        private System.Timers.Timer? timer;
-        private CancellationTokenSource? _cts;
-        private readonly object _dataLock = new();
-        private int updateInterval = 1;
+        private int updateInterval = Polling.DefaultIntervalSeconds;
 
         private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
         private ApexChartOptions<ChartDataPoint> GpuChartOptions { get; set; } = new();
@@ -52,7 +38,7 @@ namespace SystemMonitor.Components.Pages
             {
                 Chart = new Chart
                 {
-                    Background = "#f4f4f4", // Light gray background
+                    Background = "#f4f4f4",
                     Toolbar = new ApexCharts.Toolbar
                     {
                         Show = true
@@ -81,11 +67,11 @@ namespace SystemMonitor.Components.Pages
                 Title = new Title()
                 {
                     Text = title,
-                    Align = Align.Center,  
+                    Align = Align.Center,
                     Style = new TitleStyle
                     {
-                        FontSize = "20px",  
-                        FontWeight = "bold" 
+                        FontSize = "20px",
+                        FontWeight = "bold"
                     }
                 },
                 Stroke = new Stroke
@@ -109,19 +95,18 @@ namespace SystemMonitor.Components.Pages
                 Yaxis =
                 [
                     new YAxis
+                    {
+                        Labels = new YAxisLabels
                         {
-                            Labels = new YAxisLabels
+                            Formatter = yAxisFormat,
+                            Style = new AxisLabelStyle
                             {
-                                Formatter = yAxisFormat,
-                                Style = new AxisLabelStyle
-                                {
-                                    FontSize = "14px",
-                                    Colors = "#333"
-                                }
+                                FontSize = "14px",
+                                Colors = "#333"
                             }
-
                         }
-                 ],
+                    }
+                ],
                 Xaxis = new XAxis
                 {
                     Labels = new XAxisLabels
@@ -147,22 +132,16 @@ namespace SystemMonitor.Components.Pages
 
         protected override void OnInitialized()
         {
-            _cts = new CancellationTokenSource();
-            timer = new System.Timers.Timer(TimeSpan.FromSeconds(updateInterval));
-            timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
-            timer.AutoReset = true;
-            timer.Enabled = true;
+            MetricsService.DataUpdated += OnDataUpdated;
 
-            CpuChartOptions = GetCreateChartOptions("CPU Usage", ChartFormats.YAxis.Percent, "#ff0000"); 
-            MemoryChartOptions = GetCreateChartOptions("Memory Usage", ChartFormats.YAxis.Percent, "#00ff00"); 
+            CpuChartOptions = GetCreateChartOptions("CPU Usage", ChartFormats.YAxis.Percent, "#ff0000");
+            MemoryChartOptions = GetCreateChartOptions("Memory Usage", ChartFormats.YAxis.Percent, "#00ff00");
             GpuChartOptions = GetCreateChartOptions("GPU Usage", ChartFormats.YAxis.Percent, "#0000ff");
             DownloadChartOptions = GetCreateChartOptions("Download Speed", ChartFormats.YAxis.BytesPerSecond, "#ffcc00");
             UploadChartOptions = GetCreateChartOptions("Upload Speed", ChartFormats.YAxis.BytesPerSecond, "#ffcc00");
-            BatteryChartOptions = GetCreateChartOptions("Battery Level", ChartFormats.YAxis.Percent, "#ff6600");  
-            StorageChartOptions = GetCreateChartOptions("Storage Usage", ChartFormats.YAxis.Percent, "#9933ff");  
-            PsuChartOptions = GetCreateChartOptions("PSU Usage", ChartFormats.YAxis.Percent, "#33ccff");  
-
-            allDataQueues = [cpuData, memoryData, gpuData, downloadData, uploadData, batteryData, storageData, psuData];
+            BatteryChartOptions = GetCreateChartOptions("Battery Level", ChartFormats.YAxis.Percent, "#ff6600");
+            StorageChartOptions = GetCreateChartOptions("Storage Usage", ChartFormats.YAxis.Percent, "#9933ff");
+            PsuChartOptions = GetCreateChartOptions("PSU Usage", ChartFormats.YAxis.Percent, "#33ccff");
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -173,92 +152,29 @@ namespace SystemMonitor.Components.Pages
             }
         }
 
-        private void PauseMonitoring() => timer?.Stop();
-        private void StartMonitoring() => timer?.Start();
+        private void OnDataUpdated()
+        {
+            InvokeAsync(async () =>
+            {
+                await Task.WhenAll(allCharts.Select(c => c.UpdateChartAsync()));
+                StateHasChanged();
+            });
+        }
+
+        private void PauseMonitoring() => MetricsService.Stop();
+        private void StartMonitoring() => MetricsService.Start();
 
         private void OnUpdateIntervalChanged(int newInterval)
         {
             updateInterval = newInterval;
-
-            // Restart the timer with the new interval
-            if (timer != null)
-            {
-                timer.Stop();
-                timer.Interval = updateInterval * 1000;
-                timer.Start();
-            }
+            MetricsService.SetInterval(newInterval);
         }
 
-        private async Task UpdatePerformanceData()
-        {
-            if (_cts?.IsCancellationRequested == true) return;
-
-            double cpuUsage = PerformanceService.GetCpuUsage();
-            double memoryUsage = PerformanceService.GetMemoryUsage();
-            double gpuUsage = PerformanceService.GetGpuUsage();
-            double batteryLevel = PerformanceService.GetBatteryLevel();
-            double storageUsage = PerformanceService.GetStorageUsage();
-            double psuUsage = PerformanceService.GetPsuUsage();
-            double downloadSpeed = PerformanceService.GetDownloadSpeed();   
-            double uploadSpeed = PerformanceService.GetUploadSpeed();
-
-            lock (_dataLock)
-            {
-                cpuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
-                memoryData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
-                gpuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
-                downloadData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
-                uploadData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
-                batteryData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
-                storageData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
-                psuData.Enqueue(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
-
-                // Limit the history to the last 100 data points
-                foreach (var queue in allDataQueues.Where(x => x.Count > 100))
-                {
-                    queue.Dequeue();
-                }
-            }
-
-            var updateTasks = new List<Task>();
-
-            foreach (var chart in allCharts)
-            {
-                updateTasks.Add(chart.UpdateChartAsync());
-            }
-
-
-            await Task.WhenAll(updateTasks);
-
-            await InvokeAsync(StateHasChanged);
-        }
-
-        private void ResetCharts()
-        {
-            lock (_dataLock)
-            {
-                cpuData.Clear();
-                memoryData.Clear();
-                gpuData.Clear();
-                downloadData.Clear();
-                uploadData.Clear();
-                batteryData.Clear();
-                storageData.Clear();
-                psuData.Clear();
-            }
-            StateHasChanged();
-        }
+        private void ResetCharts() => MetricsService.Reset();
 
         public void Dispose()
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-
-            if (timer != null)
-            {
-                timer.Stop();
-                timer.Dispose();
-            }
+            MetricsService.DataUpdated -= OnDataUpdated;
         }
     }
 }

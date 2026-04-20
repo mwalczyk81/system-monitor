@@ -6,8 +6,6 @@
 @using SystemMonitor.Models
 @using SystemMonitor.Components.Charts
 
-@inject ISystemPerformanceService PerformanceService
-
 <MudContainer Class="mb-4" Style="text-align: center; margin-top: 20px; overflow: visible;">
     <MudText Color="MudBlazor.Color.Primary" Typo="Typo.h3" Style="font-weight:bold; margin-bottom: 16px;">
         System Performance Monitor
@@ -23,9 +21,9 @@
     <RoundedButton Color="MudBlazor.Color.Warning" Icon="@Icons.Material.Filled.PauseCircle" OnClick="@PauseMonitoring" Text="Pause">  </RoundedButton>
     <RoundedButton Color="MudBlazor.Color.Error" Icon="@Icons.Material.Filled.RestartAlt" OnClick="@ResetCharts" Text="Reset">  </RoundedButton>
 
-    <AverageUsageDisplay Label="Average CPU Usage" Data="cpuData" Unit="%" />
-    <AverageUsageDisplay Label="Average Memory Usage" Data="memoryData" Unit="%" />
-    <AverageUsageDisplay Label="Average GPU Usage" Data="gpuData" Unit="%" />
+    <AverageUsageDisplay Label="Average CPU Usage" Data="MetricsService.CpuData" Unit="%" />
+    <AverageUsageDisplay Label="Average Memory Usage" Data="MetricsService.MemoryData" Unit="%" />
+    <AverageUsageDisplay Label="Average GPU Usage" Data="MetricsService.GpuData" Unit="%" />
 </MudContainer>
 
 <MudGrid Class="mt-2" Gutter="true" Style="height: 100vh; padding: 0;">
@@ -33,7 +31,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="cpuUsageChart" Title="CPU Usage" Data="cpuData" Options="CpuChartOptions" />
+                <UsageChart @ref="cpuUsageChart" Title="CPU Usage" Data="MetricsService.CpuData" Options="CpuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -42,7 +40,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="memoryUsageChart" Title="Memory Usage" Data="memoryData" Options="MemoryChartOptions" />
+                <UsageChart @ref="memoryUsageChart" Title="Memory Usage" Data="MetricsService.MemoryData" Options="MemoryChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -51,7 +49,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="gpuUsageChart" Title="GPU Usage" Data="gpuData" Options="GpuChartOptions" />
+                <UsageChart @ref="gpuUsageChart" Title="GPU Usage" Data="MetricsService.GpuData" Options="GpuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -60,7 +58,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="downloadChart" Title="Download Speed" Data="downloadData" Options="DownloadChartOptions" />
+                <UsageChart @ref="downloadChart" Title="Download Speed" Data="MetricsService.DownloadData" Options="DownloadChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -69,7 +67,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="uploadChart" Title="Upload Speed" Data="uploadData" Options="UploadChartOptions" />
+                <UsageChart @ref="uploadChart" Title="Upload Speed" Data="MetricsService.UploadData" Options="UploadChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -78,7 +76,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="batteryUsageChart" Title="Battery Level" Data="batteryData" Options="BatteryChartOptions" />
+                <UsageChart @ref="batteryUsageChart" Title="Battery Level" Data="MetricsService.BatteryData" Options="BatteryChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -87,7 +85,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="storageUsageChart" Title="Storage Usage" Data="storageData" Options="StorageChartOptions" />
+                <UsageChart @ref="storageUsageChart" Title="Storage Usage" Data="MetricsService.StorageData" Options="StorageChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -96,7 +94,7 @@
     <MudItem xs="12" md="4">
         <MudCard Elevation="6" Style="height: 100%; padding: 16px; margin-bottom: 16px;">
             <MudCardContent>
-                <UsageChart @ref="psuUsageChart" Title="PSU Usage" Data="psuData" Options="PsuChartOptions" />
+                <UsageChart @ref="psuUsageChart" Title="PSU Usage" Data="MetricsService.PsuData" Options="PsuChartOptions" />
             </MudCardContent>
         </MudCard>
     </MudItem>

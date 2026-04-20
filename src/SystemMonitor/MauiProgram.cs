@@ -19,16 +19,17 @@ namespace SystemMonitor
             builder.Services.AddMudServices();
 
 #if WINDOWS
-        builder.Services.AddScoped<ISystemPerformanceService, WindowsSystemPerformanceService>();
+            builder.Services.AddSingleton<ISystemPerformanceService, WindowsSystemPerformanceService>();
 #elif MACCATALYST
-        builder.Services.AddScoped<ISystemPerformanceService, MacOSSystemPerformanceService>();
+            builder.Services.AddSingleton<ISystemPerformanceService, MacOSSystemPerformanceService>();
 #elif LINUX
-        builder.Services.AddScoped<ISystemPerformanceService, LinuxSystemPerformanceService>();
+            builder.Services.AddSingleton<ISystemPerformanceService, LinuxSystemPerformanceService>();
 #elif ANDROID
-            builder.Services.AddScoped<ISystemPerformanceService, AndroidSystemPerformanceService>(sp => new AndroidSystemPerformanceService(Android.App.Application.Context));
+            builder.Services.AddSingleton<ISystemPerformanceService, AndroidSystemPerformanceService>(sp => new AndroidSystemPerformanceService(Android.App.Application.Context));
 #elif IOS
-        builder.Services.AddScoped<ISystemPerformanceService, iOSSystemPerformanceService>();
+            builder.Services.AddSingleton<ISystemPerformanceService, iOSSystemPerformanceService>();
 #endif
+            builder.Services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG

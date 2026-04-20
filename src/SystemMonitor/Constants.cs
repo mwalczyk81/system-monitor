@@ -8,6 +8,13 @@ namespace SystemMonitor
 {
     public class Constants
     {
+        public class Polling
+        {
+            public const int DefaultIntervalSeconds = 1;
+            public const int MaxDataPoints = 100;
+            public static readonly int[] AvailableIntervals = [1, 5, 10];
+        }
+
         public class ChartFormats
         {
             public class YAxis

@@ -61,11 +61,6 @@ namespace SystemMonitor.Services
         {
             throw new NotImplementedException();
         }
-
-        public double GetNetworkUsage()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
 
