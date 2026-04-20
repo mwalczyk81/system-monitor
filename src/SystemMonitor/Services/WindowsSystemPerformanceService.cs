@@ -33,18 +33,22 @@ namespace SystemMonitor.Services
         {
             double batteryLevel = 0;
 
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Battery))
+            try
             {
-                hardware.Update();
-
-                foreach (ISensor sensor in hardware.Sensors)
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Battery))
                 {
-                    if (sensor.SensorType == SensorType.Level && sensor.Name.Contains("Charge"))
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        batteryLevel = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Level && sensor.Name.Contains("Charge"))
+                        {
+                            batteryLevel = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return batteryLevel;
         }
@@ -52,18 +56,23 @@ namespace SystemMonitor.Services
         public double GetCpuUsage()
         {
             double cpuLoad = 0;
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Cpu))
-            {
-                hardware.Update();
 
-                foreach (ISensor sensor in hardware.Sensors)
+            try
+            {
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Cpu))
                 {
-                    if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("CPU Total"))
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        cpuLoad = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("CPU Total"))
+                        {
+                            cpuLoad = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return cpuLoad;
         }
@@ -71,18 +80,23 @@ namespace SystemMonitor.Services
         public double GetGpuUsage()
         {
             double gpuLoad = 0;
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.GpuNvidia || x.HardwareType == HardwareType.GpuAmd || x.HardwareType == HardwareType.GpuIntel))
-            {
-                hardware.Update();
 
-                foreach (ISensor sensor in hardware.Sensors)
+            try
+            {
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.GpuNvidia || x.HardwareType == HardwareType.GpuAmd || x.HardwareType == HardwareType.GpuIntel))
                 {
-                    if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("GPU Core"))
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        gpuLoad = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("GPU Core"))
+                        {
+                            gpuLoad = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return gpuLoad;
         }
@@ -93,50 +107,58 @@ namespace SystemMonitor.Services
             double totalMemory = 0;
             double usedMemory = 0;
 
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Memory))
+            try
             {
-                hardware.Update(); // Refresh memory sensor data
-
-                foreach (ISensor sensor in hardware.Sensors)
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Memory))
                 {
-                    if (sensor.SensorType == SensorType.Data && sensor.Name.Equals("Memory Used", StringComparison.OrdinalIgnoreCase))
-                    {
-                        usedMemory = sensor.Value.GetValueOrDefault();
-                    }
+                    hardware.Update();
 
-                    if (sensor.SensorType == SensorType.Data && sensor.Name.Equals("Memory Available", StringComparison.OrdinalIgnoreCase))
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        availableMemory = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Data && sensor.Name.Equals("Memory Used", StringComparison.OrdinalIgnoreCase))
+                        {
+                            usedMemory = sensor.Value.GetValueOrDefault();
+                        }
+
+                        if (sensor.SensorType == SensorType.Data && sensor.Name.Equals("Memory Available", StringComparison.OrdinalIgnoreCase))
+                        {
+                            availableMemory = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             totalMemory = availableMemory + usedMemory;
 
-            if (totalMemory == 0) return 0; // Avoid division by zero
+            if (totalMemory == 0) return 0;
 
-            return (usedMemory / totalMemory) * 100.0; // Physical memory usage percentage
+            return (usedMemory / totalMemory) * 100.0;
         }
 
         public double GetDownloadSpeed()
         {
             double downloadSpeed = 0;
 
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Network))
+            try
             {
-                hardware.Update();
-
-                foreach (ISensor sensor in hardware.Sensors)
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Network))
                 {
-                    if (sensor.SensorType == SensorType.Throughput)
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        if (sensor.Name.Contains("Download Speed", StringComparison.OrdinalIgnoreCase))
+                        if (sensor.SensorType == SensorType.Throughput)
                         {
-                            downloadSpeed += sensor.Value.GetValueOrDefault();
-                        }                        
+                            if (sensor.Name.Contains("Download Speed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                downloadSpeed += sensor.Value.GetValueOrDefault();
+                            }
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return downloadSpeed;
         }
@@ -145,21 +167,25 @@ namespace SystemMonitor.Services
         {
             double uploadSpeed = 0;
 
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Network))
+            try
             {
-                hardware.Update();
-
-                foreach (ISensor sensor in hardware.Sensors)
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Network))
                 {
-                    if (sensor.SensorType == SensorType.Throughput)
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        if (sensor.Name.Contains("Upload Speed", StringComparison.OrdinalIgnoreCase))
+                        if (sensor.SensorType == SensorType.Throughput)
                         {
-                            uploadSpeed += sensor.Value.GetValueOrDefault();
+                            if (sensor.Name.Contains("Upload Speed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                uploadSpeed += sensor.Value.GetValueOrDefault();
+                            }
                         }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return uploadSpeed;
         }
@@ -167,18 +193,23 @@ namespace SystemMonitor.Services
         public double GetStorageUsage()
         {
             double totalUsage = 0;
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Storage))
-            {
-                hardware.Update();
 
-                foreach (ISensor sensor in hardware.Sensors)
+            try
+            {
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Storage))
                 {
-                    if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("Used Space"))
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        totalUsage = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("Used Space"))
+                        {
+                            totalUsage = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return totalUsage;
         }
@@ -187,18 +218,22 @@ namespace SystemMonitor.Services
         {
             double psuPower = 0;
 
-            foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Psu))
+            try
             {
-                hardware.Update();
-
-                foreach (ISensor sensor in hardware.Sensors)
+                foreach (IHardware hardware in _computer.Hardware.Where(x => x.HardwareType == HardwareType.Psu))
                 {
-                    if (sensor.SensorType == SensorType.Power && sensor.Name.Contains("Power"))
+                    hardware.Update();
+
+                    foreach (ISensor sensor in hardware.Sensors)
                     {
-                        psuPower = sensor.Value.GetValueOrDefault();
+                        if (sensor.SensorType == SensorType.Power && sensor.Name.Contains("Power"))
+                        {
+                            psuPower = sensor.Value.GetValueOrDefault();
+                        }
                     }
                 }
             }
+            catch { /* return 0 if hardware access fails */ }
 
             return psuPower;
         }

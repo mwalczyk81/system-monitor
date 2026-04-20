@@ -32,7 +32,8 @@ namespace SystemMonitor.Components.Pages
         private UsageChart psuUsageChart = new();
         private List<UsageChart> allCharts = [];
 
-        private System.Timers.Timer? timer = new();
+        private System.Timers.Timer? timer;
+        private CancellationTokenSource? _cts;
         private readonly object _dataLock = new();
         private int updateInterval = 1;
 
@@ -146,6 +147,7 @@ namespace SystemMonitor.Components.Pages
 
         protected override void OnInitialized()
         {
+            _cts = new CancellationTokenSource();
             timer = new System.Timers.Timer(TimeSpan.FromSeconds(updateInterval));
             timer.Elapsed += async (sender, e) => await UpdatePerformanceData();
             timer.AutoReset = true;
@@ -181,6 +183,8 @@ namespace SystemMonitor.Components.Pages
 
         private async Task UpdatePerformanceData()
         {
+            if (_cts?.IsCancellationRequested == true) return;
+
             double cpuUsage = PerformanceService.GetCpuUsage();
             double memoryUsage = PerformanceService.GetMemoryUsage();
             double gpuUsage = PerformanceService.GetGpuUsage();
@@ -241,6 +245,9 @@ namespace SystemMonitor.Components.Pages
 
         public void Dispose()
         {
+            _cts?.Cancel();
+            _cts?.Dispose();
+
             if (timer != null)
             {
                 timer.Stop();

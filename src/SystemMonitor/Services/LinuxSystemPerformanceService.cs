@@ -8,7 +8,10 @@ namespace SystemMonitor.Services
 
         public double GetBatteryLevel()
         {
-            var batteryLevel = File.ReadAllText("/sys/class/power_supply/BAT0/capacity");
+            const string path = "/sys/class/power_supply/BAT0/capacity";
+            if (!File.Exists(path)) return 0;
+
+            var batteryLevel = File.ReadAllText(path);
             if (double.TryParse(batteryLevel.Trim(), out var battery))
             {
                 return battery;
@@ -63,7 +66,10 @@ namespace SystemMonitor.Services
 
         public double GetPsuUsage()
         {
-            var powerConsumption = File.ReadAllText("/sys/class/power_supply/BAT0/power_now");
+            const string path = "/sys/class/power_supply/BAT0/power_now";
+            if (!File.Exists(path)) return 0;
+
+            var powerConsumption = File.ReadAllText(path);
             if (double.TryParse(powerConsumption.Trim(), out var power))
             {
                 return power / 1_000_000.0;

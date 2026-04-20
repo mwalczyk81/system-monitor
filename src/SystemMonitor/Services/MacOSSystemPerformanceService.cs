@@ -19,6 +19,7 @@ namespace SystemMonitor.Services
             using var process = Process.Start(startInfo);
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
+            process.WaitForExit();
             if (double.TryParse(result.Trim(), out double batteryLevel))
             {
                 return batteryLevel;
@@ -40,6 +41,7 @@ namespace SystemMonitor.Services
             using var process = Process.Start(startInfo);
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
+            process.WaitForExit();
 
             // Extract the user and system CPU usage
             string[] parts = result.Split(',');
@@ -69,6 +71,7 @@ namespace SystemMonitor.Services
             using var process = Process.Start(startInfo);
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
+            process.WaitForExit();
 
             // Since `ioreg` doesn't directly provide GPU utilization, you'll need to parse the output to find relevant information.
             // This example looks for general GPU-related info, but you might need a more advanced method for real-time usage.
@@ -97,6 +100,7 @@ namespace SystemMonitor.Services
             using var process = Process.Start(startInfo);
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
+            process.WaitForExit();
 
             if (double.TryParse(result.Split(':')[1].Trim().Replace(".", ""), out double freePages))
             {
@@ -114,6 +118,7 @@ namespace SystemMonitor.Services
                 using var totalMemoryProcess = Process.Start(totalMemoryInfo);
                 using var totalMemoryReader = totalMemoryProcess.StandardOutput;
                 string totalMemoryResult = totalMemoryReader.ReadToEnd();
+                totalMemoryProcess.WaitForExit();
 
                 if (double.TryParse(totalMemoryResult.Trim(), out double totalMemory))
                 {
@@ -138,6 +143,7 @@ namespace SystemMonitor.Services
             using var process = Process.Start(startInfo);
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
+            process.WaitForExit();
 
             if (double.TryParse(result.Trim(), out double storageUsage))
             {
