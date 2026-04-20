@@ -33,7 +33,7 @@ namespace SystemMonitor.Components.Pages
         private List<UsageChart> allCharts = [];
 
         private System.Timers.Timer? timer = new();
-        private bool isMonitoring = true;
+        private readonly object _dataLock = new();
         private int updateInterval = 1;
 
         private ApexChartOptions<ChartDataPoint> CpuChartOptions { get; set; } = new();
@@ -163,8 +163,8 @@ namespace SystemMonitor.Components.Pages
             allDataLists = [cpuData, memoryData, gpuData, downloadData, uploadData, batteryData, storageData, psuData];
         }
 
-        private void PauseMonitoring() => isMonitoring = false;
-        private void StartMonitoring() => isMonitoring = true;
+        private void PauseMonitoring() => timer?.Stop();
+        private void StartMonitoring() => timer?.Start();
 
         private void OnUpdateIntervalChanged(int newInterval)
         {
@@ -181,9 +181,6 @@ namespace SystemMonitor.Components.Pages
 
         private async Task UpdatePerformanceData()
         {
-
-            if (!isMonitoring) return;
-
             double cpuUsage = PerformanceService.GetCpuUsage();
             double memoryUsage = PerformanceService.GetMemoryUsage();
             double gpuUsage = PerformanceService.GetGpuUsage();
@@ -193,20 +190,22 @@ namespace SystemMonitor.Components.Pages
             double downloadSpeed = PerformanceService.GetDownloadSpeed();   
             double uploadSpeed = PerformanceService.GetUploadSpeed();
 
-            cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
-            memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
-            gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
-            downloadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
-            uploadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
-            batteryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
-            storageData.Add(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
-            psuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
-
-
-            // Limit the history to the last 100 data points
-            foreach (var dataList in allDataLists.Where(x => x.Count > 100))
+            lock (_dataLock)
             {
-                dataList.RemoveAt(0);
+                cpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = cpuUsage });
+                memoryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = memoryUsage });
+                gpuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = gpuUsage });
+                downloadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = downloadSpeed });
+                uploadData.Add(new ChartDataPoint { Time = DateTime.Now, Value = uploadSpeed });
+                batteryData.Add(new ChartDataPoint { Time = DateTime.Now, Value = batteryLevel });
+                storageData.Add(new ChartDataPoint { Time = DateTime.Now, Value = storageUsage });
+                psuData.Add(new ChartDataPoint { Time = DateTime.Now, Value = psuUsage });
+
+                // Limit the history to the last 100 data points
+                foreach (var dataList in allDataLists.Where(x => x.Count > 100))
+                {
+                    dataList.RemoveAt(0);
+                }
             }
 
             allCharts = [cpuUsageChart, memoryUsageChart, gpuUsageChart, downloadChart, uploadChart, batteryUsageChart, storageUsageChart, psuUsageChart];
@@ -226,9 +225,17 @@ namespace SystemMonitor.Components.Pages
 
         private void ResetCharts()
         {
-            cpuData.Clear();
-            memoryData.Clear();
-            gpuData.Clear();
+            lock (_dataLock)
+            {
+                cpuData.Clear();
+                memoryData.Clear();
+                gpuData.Clear();
+                downloadData.Clear();
+                uploadData.Clear();
+                batteryData.Clear();
+                storageData.Clear();
+                psuData.Clear();
+            }
             StateHasChanged();
         }
 
