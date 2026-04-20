@@ -57,20 +57,15 @@ namespace SystemMonitor.Services
         [DllImport(ObjCRuntime.Constants.SystemLibrary)]
         private static extern IntPtr mach_task_self();
 
-        public double GetGpuUsage()
-        {
-            throw new NotImplementedException();
-        }
+        public double GetGpuUsage() => 0.0;
 
-        public double GetPsuUsage()
-        {
-            throw new NotImplementedException();
-        }
+        public double GetPsuUsage() => 0.0;
 
-        public double GetStorageUsage()
-        {
-            throw new NotImplementedException();
-        }
+        public double GetStorageUsage() => 0.0;
+
+        public double GetDownloadSpeed() => 0.0;
+
+        public double GetUploadSpeed() => 0.0;
 
         private const int MACH_TASK_BASIC_INFO = 20;
         private struct mach_task_basic_info_data_t

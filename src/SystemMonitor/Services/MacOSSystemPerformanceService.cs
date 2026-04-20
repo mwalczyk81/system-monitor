@@ -17,6 +17,7 @@ namespace SystemMonitor.Services
                 CreateNoWindow = true
             };
             using var process = Process.Start(startInfo);
+            if (process is null) return -1;
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
             process.WaitForExit();
@@ -39,6 +40,7 @@ namespace SystemMonitor.Services
                 CreateNoWindow = true
             };
             using var process = Process.Start(startInfo);
+            if (process is null) return 0;
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
             process.WaitForExit();
@@ -69,6 +71,7 @@ namespace SystemMonitor.Services
             };
 
             using var process = Process.Start(startInfo);
+            if (process is null) return 0;
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
             process.WaitForExit();
@@ -98,6 +101,7 @@ namespace SystemMonitor.Services
                 CreateNoWindow = true
             };
             using var process = Process.Start(startInfo);
+            if (process is null) return 0;
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
             process.WaitForExit();
@@ -116,6 +120,7 @@ namespace SystemMonitor.Services
                     CreateNoWindow = true
                 };
                 using var totalMemoryProcess = Process.Start(totalMemoryInfo);
+                if (totalMemoryProcess is null) return 0;
                 using var totalMemoryReader = totalMemoryProcess.StandardOutput;
                 string totalMemoryResult = totalMemoryReader.ReadToEnd();
                 totalMemoryProcess.WaitForExit();
@@ -141,6 +146,7 @@ namespace SystemMonitor.Services
                 CreateNoWindow = true
             };
             using var process = Process.Start(startInfo);
+            if (process is null) return 0;
             using var reader = process.StandardOutput;
             string result = reader.ReadToEnd();
             process.WaitForExit();
@@ -153,19 +159,10 @@ namespace SystemMonitor.Services
             return 0;  // Return 0 if unable to fetch storage data
         }
 
-        public double GetPsuUsage()
-        {
-            throw new NotImplementedException();  // PSU monitoring not typically available on macOS
-        }
+        public double GetPsuUsage() => 0.0;
 
-        public double GetDownloadSpeed()
-        {
-            throw new NotImplementedException();
-        }
+        public double GetDownloadSpeed() => 0.0;
 
-        public double GetUploadSpeed()
-        {
-            throw new NotImplementedException();
-        }
+        public double GetUploadSpeed() => 0.0;
     }
 }
